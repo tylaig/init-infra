@@ -4,6 +4,7 @@
 # Script de Configuração de Infraestrutura - Ubuntu 22.04
 # Versão: 2.7.1
 # Otimizado para Ubuntu 22.04 LTS
+# Suporte completo para parâmetros CLI
 # =============================================================================
 
 # Cores para output
@@ -13,6 +14,219 @@ branco="\e[97m"
 bege="\e[93m"
 vermelho="\e[91m"
 reset="\e[0m"
+
+# =============================================================================
+# Variáveis Globais para Parâmetros CLI
+# =============================================================================
+AUTO_MODE="false"
+SKIP_LICENSE="false"
+QUIET_MODE="false"
+RETURN_DATA="false"
+CLI_OPTION=""
+CLI_PARAMS=()
+
+# =============================================================================
+# Funções de Ajuda e Versão
+# =============================================================================
+
+show_help() {
+    echo "Setup - Script de Configuração de Infraestrutura"
+    echo ""
+    echo "USO:"
+    echo "  bash <(curl -sSL https://raw.githubusercontent.com/tylaig/init-infra/main/Setup) [OPÇÕES]"
+    echo ""
+    echo "OPÇÕES GERAIS:"
+    echo "  -h, --help              Mostra esta ajuda"
+    echo "  -v, --version           Mostra a versão do script"
+    echo "  -a, --auto              Modo automático (aceita termos automaticamente)"
+    echo "  -s, --skip-license       Pula aceitação de termos"
+    echo "  -q, --quiet              Modo silencioso (menos output)"
+    echo "  -r, --return-data        Retorna dados da instalação"
+    echo ""
+    echo "OPÇÕES DE APLICAÇÃO:"
+    echo "  --menu N                 Instala aplicação específica (N = número)"
+    echo ""
+    echo "PARÂMETROS DE CONFIGURAÇÃO:"
+    echo "  --domain DOMAIN          Domínio da aplicação"
+    echo "  --user USER              Usuário da aplicação"
+    echo "  --password PASS          Senha da aplicação"
+    echo "  --server-name NAME       Nome do servidor"
+    echo "  --network NETWORK         Rede (ex: 192.168.1.0/24)"
+    echo "  --email EMAIL            Email de administração"
+    echo "  --db-name DBNAME         Nome do banco de dados"
+    echo "  --db-user DBUSER         Usuário do banco de dados"
+    echo "  --db-password DBPASS     Senha do banco de dados"
+    echo "  --admin-email ADMIN_EMAIL Email do administrador"
+    echo "  --admin-password ADMIN_PASS Senha do administrador"
+    echo "  --bucket-name BUCKET     Nome do bucket (MinIO/S3)"
+    echo "  --access-key ACCESS_KEY  Chave de acesso"
+    echo "  --secret-key SECRET_KEY  Chave secreta"
+    echo ""
+    echo "EXEMPLOS:"
+    echo "  # Instalação automática do Portainer:"
+    echo "  bash <(curl -sSL https://raw.githubusercontent.com/tylaig/init-infra/main/Setup) --auto --menu 1 --domain portainer.exemplo.com --user admin --password '@Senha123456_'"
+    echo ""
+    echo "  # Instalação via SSH:"
+    echo "  ssh root@servidor 'bash -s' < <(curl -sSL https://raw.githubusercontent.com/tylaig/init-infra/main/Setup) --auto --menu 1 --domain portainer.exemplo.com"
+    echo ""
+    echo "APLICAÇÕES DISPONÍVEIS:"
+    echo "  01 - Traefik + Portainer"
+    echo "  02 - Chatwoot"
+    echo "  03 - Evolution API (WhatsApp)"
+    echo "  04 - Evolution API + Chatwoot"
+    echo "  05 - Evolution API + Chatwoot + Botpress"
+    echo "  06 - MinIO"
+    echo "  07 - Typebot"
+    echo "  08 - N8N"
+    echo "  09 - Flowise"
+    echo "  10 - PgAdmin"
+    echo "  11 - Nocobase"
+    echo "  12 - Botpress"
+    echo "  13 - WordPress"
+    echo "  14 - Baserow"
+    echo "  15 - MongoDB"
+    echo "  16 - Redis"
+    echo "  17 - PostgreSQL"
+    echo "  18 - MySQL"
+    echo "  19 - MariaDB"
+    echo "  20 - InfluxDB"
+    echo "  21 - Grafana"
+    echo "  22 - Prometheus"
+    echo "  23 - Elasticsearch"
+    echo "  24 - Kibana"
+    echo "  25 - Logstash"
+    echo "  26 - RabbitMQ"
+    echo "  27 - Apache Kafka"
+    echo "  28 - Zabbix"
+    echo "  29 - Nagios"
+    echo "  30 - OpenVPN"
+    echo "  31 - WireGuard"
+}
+
+show_version() {
+    echo "Setup - Script de Configuração de Infraestrutura"
+    echo "Versão: 2.7.1"
+    echo "Otimizado para Ubuntu 22.04 LTS"
+    echo "Suporte completo para parâmetros CLI"
+    echo ""
+    echo "Repositório: https://github.com/tylaig/init-infra"
+}
+
+# =============================================================================
+# Função de Processamento de Argumentos CLI
+# =============================================================================
+
+process_args() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -h|--help)
+                show_help
+                exit 0
+                ;;
+            -v|--version)
+                show_version
+                exit 0
+                ;;
+            -a|--auto)
+                AUTO_MODE="true"
+                shift
+                ;;
+            -s|--skip-license)
+                SKIP_LICENSE="true"
+                shift
+                ;;
+            -q|--quiet)
+                QUIET_MODE="true"
+                shift
+                ;;
+            -r|--return-data)
+                RETURN_DATA="true"
+                shift
+                ;;
+            --menu)
+                CLI_OPTION="$2"
+                shift 2
+                ;;
+            --domain|--user|--password|--server-name|--network|--email|--db-name|--db-user|--db-password|--admin-email|--admin-password|--bucket-name|--access-key|--secret-key)
+                CLI_PARAMS+=("$1" "$2")
+                shift 2
+                ;;
+            *)
+                echo "Erro: Parâmetro desconhecido '$1'"
+                echo "Use --help para ver as opções disponíveis"
+                exit 1
+                ;;
+        esac
+    done
+}
+
+# =============================================================================
+# Função para Definir Variáveis CLI
+# =============================================================================
+
+set_cli_variables() {
+    for ((i=0; i<${#CLI_PARAMS[@]}; i+=2)); do
+        case "${CLI_PARAMS[$i]}" in
+            --domain)
+                url_portainer="${CLI_PARAMS[$((i+1))]}"
+                url_chatwoot="${CLI_PARAMS[$((i+1))]}"
+                url_evolution="${CLI_PARAMS[$((i+1))]}"
+                url_botpress="${CLI_PARAMS[$((i+1))]}"
+                url_wordpress="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --user)
+                user_portainer="${CLI_PARAMS[$((i+1))]}"
+                user_chatwoot="${CLI_PARAMS[$((i+1))]}"
+                user_flowise="${CLI_PARAMS[$((i+1))]}"
+                user_PgAdmin_4="${CLI_PARAMS[$((i+1))]}"
+                user_nocobase="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --password)
+                pass_portainer="${CLI_PARAMS[$((i+1))]}"
+                pass_chatwoot="${CLI_PARAMS[$((i+1))]}"
+                pass_flowise="${CLI_PARAMS[$((i+1))]}"
+                pass_PgAdmin_4="${CLI_PARAMS[$((i+1))]}"
+                pass_nocobase="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --server-name)
+                server_name="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --network)
+                network="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --email)
+                email_ssl="${CLI_PARAMS[$((i+1))]}"
+                email_chatwoot="${CLI_PARAMS[$((i+1))]}"
+                email_typebot="${CLI_PARAMS[$((i+1))]}"
+                email_smtp_n8n="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --db-name)
+                db_name="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --db-user)
+                db_user="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --db-password)
+                db_password="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --admin-email)
+                admin_email="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --admin-password)
+                admin_password="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --bucket-name)
+                bucket_name="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --access-key)
+                access_key="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --secret-key)
+                secret_key="${CLI_PARAMS[$((i+1))]}"
+                ;;
+        esac
+    done
+}
 
 # =============================================================================
 # Funções de Interface
@@ -183,6 +397,16 @@ for i in "${!pacotes[@]}"; do
 done
 
 # =============================================================================
+# Processamento de Argumentos CLI
+# =============================================================================
+
+# Processa todos os argumentos passados para o script
+process_args "$@"
+
+# Define as variáveis CLI
+set_cli_variables
+
+# =============================================================================
 # Download e Execução do SetupMSAPP
 # =============================================================================
 
@@ -196,8 +420,40 @@ curl -sSL https://raw.githubusercontent.com/tylaig/init-infra/main/SetupMSAPP -o
 if [ $? -eq 0 ]; then
     echo "Download concluído com sucesso!"
     chmod +x SetupMSAPP
-    echo "Executando SetupMSAPP..."
-    ./SetupMSAPP
+    
+    # Prepara os argumentos para passar ao SetupMSAPP
+    SETUPMSAPP_ARGS=()
+    
+    # Adiciona argumentos de modo
+    if [[ "$AUTO_MODE" == "true" ]]; then
+        SETUPMSAPP_ARGS+=("--auto")
+    fi
+    
+    if [[ "$SKIP_LICENSE" == "true" ]]; then
+        SETUPMSAPP_ARGS+=("--skip-license")
+    fi
+    
+    if [[ "$QUIET_MODE" == "true" ]]; then
+        SETUPMSAPP_ARGS+=("--quiet")
+    fi
+    
+    if [[ "$RETURN_DATA" == "true" ]]; then
+        SETUPMSAPP_ARGS+=("--return-data")
+    fi
+    
+    # Adiciona opção de menu se especificada
+    if [[ -n "$CLI_OPTION" ]]; then
+        SETUPMSAPP_ARGS+=("--menu" "$CLI_OPTION")
+    fi
+    
+    # Adiciona todos os parâmetros CLI
+    SETUPMSAPP_ARGS+=("${CLI_PARAMS[@]}")
+    
+    echo "Executando SetupMSAPP com parâmetros..."
+    echo "Argumentos: ${SETUPMSAPP_ARGS[*]}"
+    
+    # Executa o SetupMSAPP com todos os parâmetros
+    ./SetupMSAPP "${SETUPMSAPP_ARGS[@]}"
 else
     echo "Erro: Não foi possível baixar o SetupMSAPP"
     echo "Verifique sua conexão com a internet e tente novamente."
