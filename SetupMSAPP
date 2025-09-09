@@ -24,10 +24,75 @@ AUTO_MODE=false
 SKIP_LICENSE=false
 QUIET_MODE=false
 RETURN_DATA=false
+CLEAN_INSTALL=false
 
 # Variáveis para parâmetros CLI
 CLI_OPTION=""
 CLI_PARAMS=()
+
+# =============================================================================
+# Função de Limpeza Completa do Docker
+# =============================================================================
+
+clean_docker_complete() {
+    echo "🧹 Iniciando limpeza completa do Docker..."
+    echo ""
+    
+    # Para todos os containers
+    echo "1/8 - Parando todos os containers..."
+    docker stop $(docker ps -aq) 2>/dev/null || true
+    
+    # Remove todos os containers
+    echo "2/8 - Removendo todos os containers..."
+    docker rm $(docker ps -aq) 2>/dev/null || true
+    
+    # Remove todas as imagens
+    echo "3/8 - Removendo todas as imagens Docker..."
+    docker rmi $(docker images -q) 2>/dev/null || true
+    
+    # Remove todos os volumes
+    echo "4/8 - Removendo todos os volumes..."
+    docker volume rm $(docker volume ls -q) 2>/dev/null || true
+    
+    # Remove todas as redes customizadas
+    echo "5/8 - Removendo redes customizadas..."
+    docker network rm $(docker network ls -q) 2>/dev/null || true
+    
+    # Remove todos os stacks do Portainer
+    echo "6/8 - Removendo stacks do Portainer..."
+    docker stack rm $(docker stack ls --format "{{.Name}}" 2>/dev/null) 2>/dev/null || true
+    
+    # Para o serviço Docker
+    echo "7/8 - Parando serviço Docker..."
+    systemctl stop docker 2>/dev/null || true
+    systemctl stop docker.socket 2>/dev/null || true
+    systemctl stop containerd 2>/dev/null || true
+    
+    # Remove Docker e dependências
+    echo "8/8 - Removendo Docker e dependências..."
+    apt-get remove -y docker docker-engine docker.io containerd runc 2>/dev/null || true
+    apt-get purge -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin 2>/dev/null || true
+    
+    # Remove diretórios do Docker
+    rm -rf /var/lib/docker 2>/dev/null || true
+    rm -rf /var/lib/containerd 2>/dev/null || true
+    rm -rf /etc/docker 2>/dev/null || true
+    rm -rf /etc/containerd 2>/dev/null || true
+    rm -rf /var/run/docker.sock 2>/dev/null || true
+    rm -rf /var/run/containerd 2>/dev/null || true
+    
+    # Remove grupos Docker
+    groupdel docker 2>/dev/null || true
+    
+    # Limpa cache do apt
+    apt-get autoremove -y 2>/dev/null || true
+    apt-get autoclean 2>/dev/null || true
+    
+    echo ""
+    echo "✅ Limpeza completa do Docker concluída!"
+    echo "🔄 Sistema pronto para nova instalação limpa"
+    echo ""
+}
 
 # =============================================================================
 # Sistema de Parâmetros CLI
@@ -45,6 +110,7 @@ show_help() {
     echo "  -s, --skip-license      Pula aceitação da licença"
     echo "  -q, --quiet             Modo silencioso"
     echo "  -r, --return-data       Retorna dados após instalação"
+    echo "  -c, --clean-install     Remove Docker e dependências antes da instalação"
     echo "  --menu N                Define página do menu (1, 2, 3)"
     echo ""
     echo "APLICAÇÕES DISPONÍVEIS:"
@@ -132,7 +198,12 @@ process_args() {
                 RETURN_DATA=true
                 shift
                 ;;
+            -c|--clean-install)
+                CLEAN_INSTALL=true
+                shift
+                ;;
             --menu)
+                CLI_OPTION="$2"
                 menu_instalador="$2"
                 shift 2
                 ;;
@@ -35255,6 +35326,11 @@ process_args "$@"
 
 # Define variáveis baseadas nos parâmetros CLI
 set_cli_variables
+
+# Executa limpeza completa se solicitado
+if [[ "$CLEAN_INSTALL" == "true" ]]; then
+    clean_docker_complete
+fi
 
 # Mostrar nome do instalador
 nome_instalador
