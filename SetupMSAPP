@@ -343,53 +343,13 @@ direitos_setup() {
 }
 
 direitos_instalador() {
-    echo -e "$amarelo===================================================================================================\e[0m"
-    echo -e "$amarelo=                                                                                                 =\e[0m"
-    echo -e "$amarelo=  $branco Este auto instalador foi desenvolvido para auxiliar na instalação das principais aplicações $amarelo  =\e[0m"
-    echo -e "$amarelo=  $branco  disponíveis no mercado open source. Já deixo todos os créditos aos desenvolvedores de cada $amarelo  =\e[0m"
-    echo -e "$amarelo=  $branco aplicação disponíveis aqui. Este Setup é licenciado sob a Licença MIT (MIT). Você pode usar, $amarelo =\e[0m"
-    echo -e "$amarelo=  $branco  copiar, modificar, integrar, publicar, distribuir e/ou vender cópias dos produtos finais,  $amarelo  =\e[0m"
-    echo -e "$amarelo=  $branco   mas deve sempre declarar que SetupMSAPP é o autor original destes códigos e atribuir um link $amarelo  =\e[0m"
-    echo -e "$amarelo=  $branco           para o repositório oficial: https://github.com/tylaig/init-infra           $amarelo  =\e[0m"
-    echo -e "$amarelo=                                                                                                 =\e[0m"
-    echo -e "$amarelo===================================================================================================\e[0m"
+    # Pula a confirmação e vai direto para o menu
+    echo "SetupMSAPP - Instalador de Aplicações para Infraestrutura"
+    echo "Licenciado sob MIT - https://github.com/tylaig/init-infra"
     echo ""
-    echo ""
-    
-    # Se estiver em modo automático ou skip-license, aceita automaticamente
-    if [[ "$AUTO_MODE" == "true" || "$SKIP_LICENSE" == "true" ]]; then
-        echo "Modo automático: Aceitando termos automaticamente..."
-        return
-    fi
-    
-    read -p "Ao digitar Y você aceita e concorda com as orientações passadas acima (Y/N): " choice
-    while true; do
-        case $choice in
-            Y|y)
-                return
-                ;;
-            N|n)
-                clear
-                nome_finalizado
-                echo "Que pena que você não concorda, então estarei encerrando o instalador. Até mais."
-                sleep 2
-                clear
-                exit 1
-                ;;
-            *)
-                clear
-                erro_msg
-                echo ""
-                echo ""
-                echo "Por favor, digite apenas Y ou N."
-                sleep 2
-                clear
-                nome_instalador
-                direitos_setup
-                ;;
-        esac
-        read -p "Ao digitar Y você aceita e concorda com as orientações passadas acima (Y/N): " choice
-    done
+    echo "Iniciando instalador..."
+    sleep 1
+    return
 }
 
 ## Credenciais Portainerv2.5.0+
