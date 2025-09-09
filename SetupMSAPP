@@ -35393,6 +35393,7 @@ install_app_auto() {
 # Se uma aplicação foi especificada via CLI, instala automaticamente
 if [[ -n "$CLI_OPTION" ]]; then
     install_app_auto "$CLI_OPTION"
+    exit 0
 fi
 
 # =============================================================================
