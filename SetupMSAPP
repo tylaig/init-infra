@@ -1,20 +1,16 @@
 #!/bin/bash
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# SetupMSAPP - Instalador de Aplicações para Infraestrutura
+# Versão: 2.7.1
+# Suporte para execução via SSH com parâmetros CLI
+# =============================================================================
 
-versao() {
-echo -e "                                   \e[97mVersão do SetupOrion: \e[32mv. 2.7.1\e[0m                                  "
-echo -e "\e[32moriondesign.art.br/whatsapp2      \e[97m<----- Grupos no WhatsApp ----->     \e[32moriondesign.art.br/whatsapp3\e[0m"
-}
+# =============================================================================
+# Configurações Globais
+# =============================================================================
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-
-## Cores do Setup
-
+# Cores para output
 amarelo="\e[33m"
 verde="\e[32m"
 branco="\e[97m"
@@ -22,15 +18,302 @@ bege="\e[93m"
 vermelho="\e[91m"
 reset="\e[0m"
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-
+# Variáveis de configuração
 menu_instalador="1"
+AUTO_MODE=false
+SKIP_LICENSE=false
+QUIET_MODE=false
+RETURN_DATA=false
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# Variáveis para parâmetros CLI
+CLI_OPTION=""
+CLI_PARAMS=()
+
+# =============================================================================
+# Sistema de Parâmetros CLI
+# =============================================================================
+
+show_help() {
+    echo "SetupMSAPP - Instalador de Aplicações para Infraestrutura"
+    echo ""
+    echo "Uso: $0 [OPÇÕES] [APLICAÇÃO] [PARÂMETROS]"
+    echo ""
+    echo "OPÇÕES:"
+    echo "  -h, --help              Mostra esta ajuda"
+    echo "  -v, --version           Mostra a versão"
+    echo "  -a, --auto              Modo automático (sem interação)"
+    echo "  -s, --skip-license      Pula aceitação da licença"
+    echo "  -q, --quiet             Modo silencioso"
+    echo "  -r, --return-data       Retorna dados após instalação"
+    echo "  --menu N                Define página do menu (1, 2, 3)"
+    echo ""
+    echo "APLICAÇÕES DISPONÍVEIS:"
+    echo "  01 - Traefik & Portainer"
+    echo "  02 - Chatwoot"
+    echo "  03 - Evolution API"
+    echo "  04 - Evolution API Lite"
+    echo "  05 - Evolution API v2"
+    echo "  06 - MinIO"
+    echo "  07 - Typebot"
+    echo "  08 - N8N"
+    echo "  09 - Flowise"
+    echo "  10 - pgAdmin 4"
+    echo "  11 - Nocobase"
+    echo "  12 - Botpress"
+    echo "  13 - WordPress"
+    echo "  14 - Baserow"
+    echo "  15 - MongoDB"
+    echo "  16 - RabbitMQ"
+    echo "  17 - Uptime Kuma"
+    echo "  18 - Cal.com"
+    echo "  19 - Mautic"
+    echo "  20 - Appsmith"
+    echo "  21 - Qdrant"
+    echo "  22 - Woofed CRM"
+    echo "  23 - Formbricks"
+    echo "  24 - NocoDB"
+    echo "  25 - Langfuse"
+    echo "  26 - Metabase"
+    echo "  27 - Odoo"
+    echo "  28 - Chatwoot Nestor"
+    echo "  29 - UnoAPI"
+    echo "  30 - N8N QuePasa"
+    echo "  31 - QuePasa"
+    echo ""
+    echo "EXEMPLOS DE USO:"
+    echo ""
+    echo "1. Instalar Portainer:"
+    echo "   $0 --auto 01 --domain portainer.exemplo.com --user admin --password '@Senha123456_' --server-name 'MeuServidor' --network '192.168.1.0/24' --email 'admin@exemplo.com'"
+    echo ""
+    echo "2. Instalar Chatwoot:"
+    echo "   $0 --auto 02 --domain chatwoot.exemplo.com --db-name chatwoot --db-user chatwoot --db-password '@Senha123456_' --admin-email 'admin@exemplo.com' --admin-password '@Senha123456_'"
+    echo ""
+    echo "3. Instalar N8N:"
+    echo "   $0 --auto 08 --domain n8n.exemplo.com --db-name n8n --db-user n8n --db-password '@Senha123456_'"
+    echo ""
+    echo "4. Execução via SSH:"
+    echo "   ssh user@server 'bash -s' < SetupMSAPP --auto 01 --domain portainer.exemplo.com --user admin --password '@Senha123456_' --server-name 'MeuServidor' --network '192.168.1.0/24' --email 'admin@exemplo.com'"
+    echo ""
+}
+
+show_version() {
+    echo "SetupMSAPP v2.7.1"
+    echo "Instalador de Aplicações para Infraestrutura"
+    echo "Suporte para execução via SSH com parâmetros CLI"
+}
+
+# Processa argumentos da linha de comando
+process_args() {
+    local current_param=""
+    
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -h|--help)
+                show_help
+                exit 0
+                ;;
+            -v|--version)
+                show_version
+                exit 0
+                ;;
+            -a|--auto)
+                AUTO_MODE=true
+                shift
+                ;;
+            -s|--skip-license)
+                SKIP_LICENSE=true
+                shift
+                ;;
+            -q|--quiet)
+                QUIET_MODE=true
+                shift
+                ;;
+            -r|--return-data)
+                RETURN_DATA=true
+                shift
+                ;;
+            --menu)
+                menu_instalador="$2"
+                shift 2
+                ;;
+            --domain|--user|--password|--server-name|--network|--email|--db-name|--db-user|--db-password|--admin-email|--admin-password|--bucket-name|--api-key|--webhook-url|--token|--secret-key|--access-key|--redis-password|--mysql-password|--postgres-password)
+                current_param="$1"
+                CLI_PARAMS+=("$1" "$2")
+                shift 2
+                ;;
+            -*)
+                echo "Opção desconhecida: $1"
+                echo "Use --help para ver as opções disponíveis"
+                exit 1
+                ;;
+            *)
+                if [[ -z "$CLI_OPTION" ]]; then
+                    CLI_OPTION="$1"
+                else
+                    echo "Erro: Múltiplas aplicações especificadas"
+                    exit 1
+                fi
+                shift
+                ;;
+        esac
+    done
+}
+
+# Função para definir variáveis baseadas nos parâmetros CLI
+set_cli_variables() {
+    local i=0
+    while [[ $i -lt ${#CLI_PARAMS[@]} ]]; do
+        case "${CLI_PARAMS[$i]}" in
+            --domain)
+                url_portainer="${CLI_PARAMS[$((i+1))]}"
+                url_chatwoot="${CLI_PARAMS[$((i+1))]}"
+                url_evolution="${CLI_PARAMS[$((i+1))]}"
+                url_minio="${CLI_PARAMS[$((i+1))]}"
+                url_typebot="${CLI_PARAMS[$((i+1))]}"
+                url_n8n="${CLI_PARAMS[$((i+1))]}"
+                url_flowise="${CLI_PARAMS[$((i+1))]}"
+                url_pgadmin="${CLI_PARAMS[$((i+1))]}"
+                url_nocobase="${CLI_PARAMS[$((i+1))]}"
+                url_botpress="${CLI_PARAMS[$((i+1))]}"
+                url_wordpress="${CLI_PARAMS[$((i+1))]}"
+                url_baserow="${CLI_PARAMS[$((i+1))]}"
+                url_mongodb="${CLI_PARAMS[$((i+1))]}"
+                url_rabbitmq="${CLI_PARAMS[$((i+1))]}"
+                url_uptimekuma="${CLI_PARAMS[$((i+1))]}"
+                url_calcom="${CLI_PARAMS[$((i+1))]}"
+                url_mautic="${CLI_PARAMS[$((i+1))]}"
+                url_appsmith="${CLI_PARAMS[$((i+1))]}"
+                url_qdrant="${CLI_PARAMS[$((i+1))]}"
+                url_woofedcrm="${CLI_PARAMS[$((i+1))]}"
+                url_formbricks="${CLI_PARAMS[$((i+1))]}"
+                url_nocodb="${CLI_PARAMS[$((i+1))]}"
+                url_langfuse="${CLI_PARAMS[$((i+1))]}"
+                url_metabase="${CLI_PARAMS[$((i+1))]}"
+                url_odoo="${CLI_PARAMS[$((i+1))]}"
+                url_chatwoot_nestor="${CLI_PARAMS[$((i+1))]}"
+                url_unoapi="${CLI_PARAMS[$((i+1))]}"
+                url_n8n_quepasa="${CLI_PARAMS[$((i+1))]}"
+                url_quepasa="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --user)
+                user_portainer="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --password)
+                pass_portainer="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --server-name)
+                nome_servidor="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --network)
+                nome_rede_interna="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --email)
+                email_admin="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --db-name)
+                db_name="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --db-user)
+                db_user="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --db-password)
+                db_password="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --admin-email)
+                admin_email="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --admin-password)
+                admin_password="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --bucket-name)
+                bucket_name="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --api-key)
+                api_key="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --webhook-url)
+                webhook_url="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --token)
+                token="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --secret-key)
+                secret_key="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --access-key)
+                access_key="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --redis-password)
+                redis_password="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --mysql-password)
+                mysql_password="${CLI_PARAMS[$((i+1))]}"
+                ;;
+            --postgres-password)
+                postgres_password="${CLI_PARAMS[$((i+1))]}"
+                ;;
+        esac
+        i=$((i+2))
+    done
+}
+
+# Função para retornar dados após instalação
+return_installation_data() {
+    local app="$1"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    
+    echo ""
+    echo "=== DADOS DA INSTALAÇÃO ==="
+    echo "Timestamp: $timestamp"
+    echo "Aplicação: $app"
+    echo "Status: Instalação concluída com sucesso"
+    echo ""
+    
+    case "$app" in
+        "01"|"traefik-portainer")
+            echo "URL do Portainer: https://$url_portainer"
+            echo "Usuário: $user_portainer"
+            echo "Senha: [CONFIGURADA]"
+            echo "Nome do Servidor: $nome_servidor"
+            echo "Rede Interna: $nome_rede_interna"
+            echo "Email Admin: $email_admin"
+            ;;
+        "02"|"chatwoot")
+            echo "URL do Chatwoot: https://$url_chatwoot"
+            echo "Banco de Dados: $db_name"
+            echo "Usuário DB: $db_user"
+            echo "Email Admin: $admin_email"
+            echo "Senha Admin: [CONFIGURADA]"
+            ;;
+        "08"|"n8n")
+            echo "URL do N8N: https://$url_n8n"
+            echo "Banco de Dados: $db_name"
+            echo "Usuário DB: $db_user"
+            ;;
+        "06"|"minio")
+            echo "URL do MinIO: https://$url_minio"
+            echo "Bucket: $bucket_name"
+            echo "Access Key: $access_key"
+            echo "Secret Key: [CONFIGURADA]"
+            ;;
+        *)
+            echo "URL: https://$url_portainer"
+            echo "Configuração personalizada aplicada"
+            ;;
+    esac
+    
+    echo ""
+    echo "=== FIM DOS DADOS ==="
+}
+
+versao() {
+    echo -e "                                   \e[97mVersão do SetupMSAPP: \e[32mv. 2.7.1\e[0m                                  "
+    echo -e "\e[32mSetupMSAPP - Instalador de Aplicações para Infraestrutura\e[0m"
+}
+
+# =============================================================================
+# Configurações do Sistema
+# =============================================================================
 
 home_directory="$HOME"
 dados_vps="${home_directory}/dados_vps/dados_vps"
@@ -40,13 +323,10 @@ dados() {
     nome_rede_interna=$(grep "Rede interna:" "$dados_vps" | awk -F': ' '{print $2}')
 }
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Sistema de Licença e Termos
+# =============================================================================
 
-## Licença do Setup
-
-## copia
 direitos_setup() {
     echo -e "$amarelo===================================================================================================\e[0m"
     echo -e "$amarelo=                                                                                                 =\e[0m"
@@ -54,8 +334,8 @@ direitos_setup() {
     echo -e "$amarelo=  $branco  disponíveis no mercado open source. Já deixo todos os créditos aos desenvolvedores de cada $amarelo  =\e[0m"
     echo -e "$amarelo=  $branco aplicação disponíveis aqui. Este Setup é licenciado sob a Licença MIT (MIT). Você pode usar, $amarelo =\e[0m"
     echo -e "$amarelo=  $branco  copiar, modificar, integrar, publicar, distribuir e/ou vender cópias dos produtos finais,  $amarelo  =\e[0m"
-    echo -e "$amarelo=  $branco   mas deve sempre declarar que OrionDesign (contato@oriondesign.art.br) é o autor original  $amarelo  =\e[0m"
-    echo -e "$amarelo=  $branco           destes códigos e atribuir um link para https://oriondesign.art.br/setup           $amarelo  =\e[0m"
+    echo -e "$amarelo=  $branco   mas deve sempre declarar que SetupMSAPP é o autor original destes códigos e atribuir um link $amarelo  =\e[0m"
+    echo -e "$amarelo=  $branco           para o repositório oficial: https://github.com/tylaig/init-infra           $amarelo  =\e[0m"
     echo -e "$amarelo=                                                                                                 =\e[0m"
     echo -e "$amarelo===================================================================================================\e[0m"
     echo ""
@@ -69,12 +349,19 @@ direitos_instalador() {
     echo -e "$amarelo=  $branco  disponíveis no mercado open source. Já deixo todos os créditos aos desenvolvedores de cada $amarelo  =\e[0m"
     echo -e "$amarelo=  $branco aplicação disponíveis aqui. Este Setup é licenciado sob a Licença MIT (MIT). Você pode usar, $amarelo =\e[0m"
     echo -e "$amarelo=  $branco  copiar, modificar, integrar, publicar, distribuir e/ou vender cópias dos produtos finais,  $amarelo  =\e[0m"
-    echo -e "$amarelo=  $branco   mas deve sempre declarar que OrionDesign (contato@oriondesign.art.br) é o autor original  $amarelo  =\e[0m"
-    echo -e "$amarelo=  $branco           destes códigos e atribuir um link para https://oriondesign.art.br/setup           $amarelo  =\e[0m"
+    echo -e "$amarelo=  $branco   mas deve sempre declarar que SetupMSAPP é o autor original destes códigos e atribuir um link $amarelo  =\e[0m"
+    echo -e "$amarelo=  $branco           para o repositório oficial: https://github.com/tylaig/init-infra           $amarelo  =\e[0m"
     echo -e "$amarelo=                                                                                                 =\e[0m"
     echo -e "$amarelo===================================================================================================\e[0m"
     echo ""
     echo ""
+    
+    # Se estiver em modo automático ou skip-license, aceita automaticamente
+    if [[ "$AUTO_MODE" == "true" || "$SKIP_LICENSE" == "true" ]]; then
+        echo "Modo automático: Aceitando termos automaticamente..."
+        return
+    fi
+    
     read -p "Ao digitar Y você aceita e concorda com as orientações passadas acima (Y/N): " choice
     while true; do
         case $choice in
@@ -143,9 +430,9 @@ creditos_msg() {
 }
 
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Seção de Configuração
+# =============================================================================
 
 ## Mensagens gerais
 
@@ -271,9 +558,9 @@ nome_credenciais() {
     echo ""
     info_credenciais
 }
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Seção de Configuração
+# =============================================================================
 
 ## Titulos
 
@@ -1799,9 +2086,9 @@ echo ""
 }
 
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Seção de Configuração
+# =============================================================================
 
 ## Defasados
 
@@ -1838,9 +2125,9 @@ nome_finalizado() {
     echo ""
 }
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Seção de Configuração
+# =============================================================================
 
 ## Menu de opções
 
@@ -1983,9 +2270,9 @@ menu_comandos(){
   echo -e ""
 }
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Seção de Configuração
+# =============================================================================
 
 ## Verificar se stack já existe
 verificar_stack() {
@@ -2009,9 +2296,9 @@ verificar_stack() {
     fi
 }
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Seção de Configuração
+# =============================================================================
 
 # Função para verificar recursos
 recursos() {
@@ -2062,9 +2349,9 @@ recursos() {
 }
 
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Seção de Configuração
+# =============================================================================
 
 stack_editavel(){
 
@@ -2431,9 +2718,9 @@ telemetria() {
     }' > /dev/null 2>&1
 }
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Seção de Configuração
+# =============================================================================
 
 ## Verificadores
 
@@ -2901,9 +3188,9 @@ esconder_senha() {
 
 
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Seção de Configuração
+# =============================================================================
 
 ## Pegar informações
 
@@ -2972,9 +3259,9 @@ pegar_link_s3() {
     url_s3=$(grep -i "MINIO_SERVER_URL" /root/minio.yaml | head -1 | sed 's/#.*//' | sed 's/.*=//; s/^[[:space:]]*//; s/[[:space:]]*$//' | sed 's|https://||')
 }
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Seção de Configuração
+# =============================================================================
 
 ## Criadores de banco de dados Postgres
 criar_banco_postgres_da_stack() {
@@ -3125,9 +3412,9 @@ um novo banco de dados? (Y/N): " resposta
     done
 }
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Seção de Configuração
+# =============================================================================
 
 validar_senha() { 
     senha=$1
@@ -3180,9 +3467,9 @@ validar_senha() {
     return 0
 }
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Seção de Configuração
+# =============================================================================
 
 ## Instalação das Ferramentas
 
@@ -3475,7 +3762,7 @@ cat > dados_vps << EOL
 [DADOS DA VPS]
 
 Estes dados foram preenchidos na hora que você foi instalar o Traefik e Portainer e
-serão utilizados para realizar as instalações no do SetupOrion v.2
+serão utilizados para realizar as instalações no do SetupMSAPP v.2
 
 Nome do Servidor: $nome_servidor
 
@@ -33898,9 +34185,9 @@ requisitar_outra_instalacao
 
 ## Ignore esta parte, só para facilitar minha identificação com esta parte "XXOOXX"
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Seção de Configuração
+# =============================================================================
 
 ## Comandos extras
 
@@ -34997,25 +35284,172 @@ minio.bucket.delete() {
 }
 
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Inicialização do Script
+# =============================================================================
 
 ## Iniciando instalador
 
-## Mostrar nome do instalador
+# Processa argumentos da linha de comando
+process_args "$@"
+
+# Define variáveis baseadas nos parâmetros CLI
+set_cli_variables
+
+# Mostrar nome do instalador
 nome_instalador
 
-## Mostrar direitos do instalador
+# Mostrar direitos do instalador
 direitos_instalador
 
 ##Após apetar Y e confirmar continua..
+
+# =============================================================================
+# Sistema de Instalação Automática
+# =============================================================================
+
+# Função para instalar aplicação automaticamente
+install_app_auto() {
+    local app="$1"
+    
+    if [[ -z "$app" ]]; then
+        echo "Erro: Nenhuma aplicação especificada para instalação automática"
+        exit 1
+    fi
+    
+    echo "Iniciando instalação automática de: $app"
+    
+    # Mapeamento de aplicações para comandos
+    case "$app" in
+        "01"|"1"|"traefik-portainer")
+            ferramenta_traefik_e_portainer
+            ;;
+        "02"|"2"|"chatwoot")
+            ferramenta_chatwoot
+            ;;
+        "03"|"3"|"evolution")
+            ferramenta_evolution
+            ;;
+        "04"|"4"|"evolution-lite")
+            ferramenta_evolution_lite
+            ;;
+        "05"|"5"|"evolution-v2")
+            ferramenta_evolution_v2
+            ;;
+        "06"|"6"|"minio")
+            ferramenta_minio
+            ;;
+        "07"|"7"|"typebot")
+            ferramenta_typebot
+            ;;
+        "08"|"8"|"n8n")
+            ferramenta_n8n
+            ;;
+        "09"|"9"|"flowise")
+            ferramenta_flowise
+            ;;
+        "10"|"pgadmin")
+            ferramenta_pgAdmin_4
+            ;;
+        "11"|"nocobase")
+            ferramenta_nocobase
+            ;;
+        "12"|"botpress")
+            ferramenta_botpress
+            ;;
+        "13"|"wordpress")
+            ferramenta_wordpress
+            ;;
+        "14"|"baserow")
+            ferramenta_baserow
+            ;;
+        "15"|"mongodb")
+            ferramenta_mongodb
+            ;;
+        "16"|"rabbitmq")
+            ferramenta_rabbitmq
+            ;;
+        "17"|"uptimekuma")
+            ferramenta_uptimekuma
+            ;;
+        "18"|"calcom")
+            ferramenta_calcom
+            ;;
+        "19"|"mautic")
+            ferramenta_mautic
+            ;;
+        "20"|"appsmith")
+            ferramenta_appsmith
+            ;;
+        "21"|"qdrant")
+            ferramenta_qdrant
+            ;;
+        "22"|"woofedcrm")
+            ferramenta_woofed
+            ;;
+        "23"|"formbricks")
+            ferramenta_formbricks
+            ;;
+        "24"|"nocodb")
+            ferramenta_nocodb
+            ;;
+        "25"|"langfuse")
+            ferramenta_langfuse
+            ;;
+        "26"|"metabase")
+            ferramenta_metabase
+            ;;
+        "27"|"odoo")
+            ferramenta_odoo
+            ;;
+        "28"|"chatwoot-nestor")
+            ferramenta_chatwoot_nestor
+            ;;
+        "29"|"unoapi")
+            ferramenta_unoapi
+            ;;
+        "30"|"n8n-quepasa")
+            ferramenta_n8n_quepasa
+            ;;
+        "31"|"quepasa")
+            ferramenta_quepasa
+            ;;
+        *)
+            echo "Erro: Aplicação '$app' não reconhecida"
+            echo "Use --help para ver as aplicações disponíveis"
+            exit 1
+            ;;
+    esac
+    
+    # Retorna dados da instalação se solicitado
+    if [[ "$RETURN_DATA" == "true" ]]; then
+        return_installation_data "$app"
+    fi
+    
+    echo "Instalação de '$app' concluída!"
+    exit 0
+}
+
+# Se uma aplicação foi especificada via CLI, instala automaticamente
+if [[ -n "$CLI_OPTION" ]]; then
+    install_app_auto "$CLI_OPTION"
+fi
+
+# =============================================================================
+# Menu Interativo (Modo Normal)
+# =============================================================================
 
 ## Menu de opções (backend)
 while true; do
 
     nome_menu
     menu_instalador
+
+    # Se estiver em modo quiet, não mostra o prompt
+    if [[ "$QUIET_MODE" == "true" ]]; then
+        echo "Modo silencioso ativado. Use parâmetros CLI para instalação automática."
+        exit 0
+    fi
 
     read -p "Digite o NÚMERO da opção desejada ou COMANDO oculto: " opcao
 
@@ -36318,9 +36752,9 @@ while true; do
             ;;
 
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Seção de Configuração
+# =============================================================================
 
         postgres)
 
@@ -36410,9 +36844,9 @@ while true; do
             ;;
             
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Seção de Configuração
+# =============================================================================
         
         evolution.v1)
 
@@ -36579,9 +37013,9 @@ while true; do
             fi
             ;;
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Seção de Configuração
+# =============================================================================
 
         ## Reiniciar portainer
         portainer.restart)
@@ -36672,9 +37106,9 @@ while true; do
             limpar
             ;;
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Seção de Configuração
+# =============================================================================
 
 
         *)

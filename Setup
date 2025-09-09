@@ -1,10 +1,12 @@
 #!/bin/bash
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Script de Configuração de Infraestrutura - Ubuntu 22.04
+# Versão: 2.7.1
+# Otimizado para Ubuntu 22.04 LTS
+# =============================================================================
 
-## Cores
+# Cores para output
 amarelo="\e[33m"
 verde="\e[32m"
 branco="\e[97m"
@@ -12,17 +14,9 @@ bege="\e[93m"
 vermelho="\e[91m"
 reset="\e[0m"
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-
-sudo apt update
-
-sudo apt upgrade -y
-
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Funções de Interface
+# =============================================================================
 
 nome_aviso(){
 
@@ -42,7 +36,7 @@ echo ""
 echo ""
 }
 
-nome_atualizadno(){
+nome_atualizando(){
     clear
     echo ""
     echo -e "$amarelo===================================================================================================$reset"
@@ -91,29 +85,42 @@ nome_verificando(){
     echo ""
     echo ""
 }
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# =============================================================================
+# Funções Utilitárias
+# =============================================================================
 
 desc_ver(){
-echo -e "                            Este script recomenda o uso do$amarelo Debian 11$branco.$reset"
-echo ""
-} 
+    echo -e "                            Este script é otimizado para$amarelo Ubuntu 22.04 LTS$branco.$reset"
+    echo -e "                            Compatível também com$amarelo Ubuntu 20.04$branco e$amarelo Debian 11$branco.$reset"
+    echo ""
+}
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# Função para executar comandos com verificação de erro
+executar_comando() {
+    local comando="$1"
+    local descricao="$2"
+    local contador="$3"
+    
+    if eval "$comando" > /dev/null 2>&1; then
+        echo "${contador}/12 - [ OK ] - ${descricao}"
+    else
+        echo "${contador}/12 - [ OFF ] - ${descricao}"
+    fi
+}
+
+# =============================================================================
+# Verificações Iniciais
+# =============================================================================
 
 clear
 nome_verificando
 echo "Aguarde enquanto verificamos algumas informações."
 sleep 1
 
-# Verifica se está usando Ubuntu 20.04
-if ! grep -q 'PRETTY_NAME="Debian GNU/Linux 11' /etc/os-release; then
+# Verifica se está usando Ubuntu 22.04, 20.04 ou Debian 11
+if ! grep -q 'PRETTY_NAME="Ubuntu 22.04' /etc/os-release && ! grep -q 'PRETTY_NAME="Ubuntu 20.04' /etc/os-release && ! grep -q 'PRETTY_NAME="Debian GNU/Linux 11' /etc/os-release; then
     nome_aviso
     desc_ver
-    #echo "Este script recomenda o uso do Debian 11."
     sleep 5
     clear
     nome_verificando
@@ -131,169 +138,85 @@ if [ "$PWD" != "/root" ]; then
     cd /root || exit
 fi
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-
+# =============================================================================
+# Instalação de Pacotes - Otimizado para Ubuntu 22.04
+# =============================================================================
 
 nome_iniciando 
 
-## Fazendo upgrade
-sudo apt upgrade -y > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo "1/14 - [ OK ] - Fazendo Upgrade"
-else
-    echo "1/14 - [ OFF ] - Fazendo Upgrade"
-fi
+# Lista de pacotes essenciais para Ubuntu 22.04
+pacotes=(
+    "apt update"
+    "apt install -y software-properties-common"
+    "apt install -y apt-transport-https"
+    "apt install -y ca-certificates"
+    "apt install -y curl"
+    "apt install -y wget"
+    "apt install -y gnupg"
+    "apt install -y lsb-release"
+    "apt install -y jq"
+    "apt install -y git"
+    "apt install -y python3"
+    "apt install -y neofetch"
+)
 
-echo ""
+# Descrições dos pacotes
+descricoes=(
+    "Atualizando lista de pacotes"
+    "Instalando software-properties-common"
+    "Instalando apt-transport-https"
+    "Instalando ca-certificates"
+    "Instalando curl"
+    "Instalando wget"
+    "Instalando gnupg"
+    "Instalando lsb-release"
+    "Instalando jq"
+    "Instalando Git"
+    "Instalando Python3"
+    "Instalando neofetch"
+)
 
-## Instalando Sudo
-apt install sudo -y > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo "2/14 - [ OK ] - Verificando/Instalando sudo"
-else
-    echo "2/14 - [ OFF ] - Verificando/Instalando sudo"
-fi
-
-echo ""
-
-## Instalando apt-utils
-sudo apt-get install -y apt-utils > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo "3/14 - [ OK ] - Verificando/Instalando apt-utils"
-else
-    echo "3/14 - [ OFF ] - Verificando/Instalando apt-utils"
-fi
-
-echo ""
-
-## Instalando dialog
-sudo apt-get install -y dialog > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo "4/14 - [ OK ] - Verificando/Instalando dialog"
-else
-    echo "4/14 - [ OFF ] - Verificando/Instalando dialog"
-fi
-
-echo ""
-
-## Instalando jq
-sudo apt-get install -y jq > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo "5/14 - [ OK ] - Verificando/Instalando jq 1/2"
-else
-    echo "5/14 - [ OFF ] - Verificando/Instalando jq 1/2"
-fi
-
-echo ""
-
-## Instalando jq
-sudo apt install jq -y > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo "6/14 - [ OK ] - Verificando/Instalando jq 2/2"
-else
-    echo "6/14 - [ OFF ] - Verificando/Instalando jq 2/2"
-fi
-
-echo ""
-
-## Instalando apache2-utils
-sudo apt install apache2-utils -y > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo "7/14 - [ OK ] - Verificando/Instalando apache2-utils 1/2"
-else
-    echo "7/14 - [ OFF ] - Verificando/Instalando apache2-utils1/2"
-fi
-
-echo ""
-
-## Instalando apache2-utils
-apt install apache2-utils -y > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo "8/14 - [ OK ] - Verificando/Instalando apache2-utils 2/2"
-else
-    echo "8/14 - [ OFF ] - Verificando/Instalando apache2-utils 2/2"
-fi
-
-echo ""
-
-## Instalando git
-apt install git -y > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo "9/14 - [ OK ] - Verificando/Instalando Git"
-else
-    echo "9/14 - [ OFF ] - Verificando/Instalando Git"
-fi
-
-echo ""
-
-## Instalando python3
-apt install python3 -y > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo "10/14 - [ OK ] - Verificando/Instalando python3"
-else
-    echo "10/14 - [ OFF ] - Verificando/Instalando python3"
-fi
-
-echo ""
-
-## Fazendo update
-sudo apt update > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo "11/14 - [ OK ] - Fazendo Update"
-else
-    echo "11/14 - [ OFF ] - Fazendo Update"
-fi
-
-echo ""
-
-## Fazendo upgrade
-sudo apt upgrade -y > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo "12/14 - [ OK ] - Fazendo Upgrade"
-else
-    echo "12/14 - [ OFF ] - Fazendo Upgrade"
-fi
-
-echo ""
-
-## Instalando neofetch
-apt install neofetch -y > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo "13/14 - [ OK ] - Verificando/Instalando neofetch"
-else
-    echo "13/14 - [ OFF ] - Verificando/Instalando neofetch"
-fi
-
-echo ""
-
-# Verifica se o arquivo SetupOrion já existe
-if [ -e "SetupOrion" ]; then
+# Instala os pacotes
+for i in "${!pacotes[@]}"; do
+    executar_comando "${pacotes[$i]}" "${descricoes[$i]}" "$((i+1))"
     echo ""
-    rm SetupOrion
+done
+
+# =============================================================================
+# Download e Execução do SetupMSAPP
+# =============================================================================
+
+# Verifica se o arquivo SetupMSAPP já existe e remove
+if [ -e "SetupMSAPP" ]; then
+    rm SetupMSAPP
 fi
 
-# Baixa o script
-curl -sSL https://raw.githubusercontent.com/oriondesign2015/SetupOrion/main/SetupOrion -o SetupOrion
+# Baixa o script SetupMSAPP
+curl -sSL https://raw.githubusercontent.com/tylaig/init-infra/main/SetupMSAPP -o SetupMSAPP
 if [ $? -eq 0 ]; then
-    echo "14/14 - [ OK ] - Baixando o script"
-    # Executa o script baixado
-    chmod +x SetupOrion
-    ./SetupOrion
+    echo "Download concluído com sucesso!"
+    chmod +x SetupMSAPP
+    echo "Executando SetupMSAPP..."
+    ./SetupMSAPP
 else
-    echo "14/14 - [ OFF ] - Baixando o script"
-    echo "Encerrando o setup"
+    echo "Erro: Não foi possível baixar o SetupMSAPP"
+    echo "Verifique sua conexão com a internet e tente novamente."
     sleep 5
 fi
 
+# =============================================================================
+# Limpeza Final
+# =============================================================================
 
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
-##                                         ORION DESIGN                                        ##
-## // ## // ## // ## // ## // ## // ## // ## //## // ## // ## // ## // ## // ## // ## // ## // ##
+# Atualiza o sistema uma última vez
+apt update > /dev/null 2>&1
+apt upgrade -y > /dev/null 2>&1
 
-sudo apt update
-sudo apt upgrade -y
+# Remove o arquivo temporário
+if [ -e "SetupMSAPP" ]; then
+    rm SetupMSAPP
+fi
 
 clear
-rm SetupOrion
+echo -e "${verde}Setup concluído com sucesso!${reset}"
+echo -e "${amarelo}Sistema configurado e pronto para uso.${reset}"
