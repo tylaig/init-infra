@@ -3642,38 +3642,6 @@ By: OrionDesign"
 ## ██║     ╚██████╔╝██║  ██║   ██║   ██║  ██║██║██║ ╚████║███████╗██║  ██║
 ## ╚═╝      ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝
 
-ferramenta_traefik_e_portainer() {
-
-## Verifica os recursos
-recursos 1 1 && continue || return
-
-## Limpa o terminal
-clear
-
-## Mostra o nome da aplicação
-nome_traefik_e_portainer
-
-## Se estiver em modo automático, pula os loops interativos
-if [[ "$AUTO_MODE" == "true" ]]; then
-    echo "Modo automático: Usando parâmetros CLI..."
-    echo "Domínio: $url_portainer"
-    echo "Usuário: $user_portainer"
-    echo "Senha: [CONFIGURADA]"
-    echo "Servidor: $server_name"
-    echo "Rede: $network"
-    echo "Email: $email_ssl"
-    echo ""
-    echo "Iniciando instalação automática..."
-    
-    # Vai direto para a instalação sem confirmação
-    clear
-    instalando_msg
-    
-    # Continua com a instalação normal
-    install_traefik_portainer_auto
-    return
-fi
-
 # Função para instalação automática do Traefik + Portainer
 install_traefik_portainer_auto() {
     # Define variáveis padrão se não foram definidas via CLI
@@ -3788,6 +3756,41 @@ EOL
         echo "email: $email_ssl"
     fi
 }
+
+ferramenta_traefik_e_portainer() {
+
+## Verifica os recursos
+recursos 1 1 && continue || return
+
+## Limpa o terminal
+clear
+
+## Mostra o nome da aplicação
+nome_traefik_e_portainer
+
+## Se estiver em modo automático, pula os loops interativos
+if [[ "$AUTO_MODE" == "true" ]]; then
+    echo "Modo automático: Usando parâmetros CLI..."
+    echo "Domínio: $url_portainer"
+    echo "Usuário: $user_portainer"
+    echo "Senha: [CONFIGURADA]"
+    echo "Servidor: $server_name"
+    echo "Rede: $network"
+    echo "Email: $email_ssl"
+    echo ""
+    echo "Iniciando instalação automática..."
+    
+    # Vai direto para a instalação sem confirmação
+    clear
+    instalando_msg
+    
+    # Continua com a instalação normal
+    install_traefik_portainer_auto
+    return
+fi
+
+## CÓDIGO INTERATIVO (só executa se não estiver em modo automático)
+
 
 ## Mostra mensagem para preencher informações
 preencha_as_info
