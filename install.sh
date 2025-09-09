@@ -2,6 +2,7 @@
 set -e
 
 CLIENTE=$1
+FORCE_CLEAN=$2
 BASE_DIR="/opt/init-infra"
 
 echo ">>> Preparando servidor para o cliente: $CLIENTE"
@@ -13,36 +14,33 @@ apt-get update -y && apt-get upgrade -y
 apt-get install -y apt-transport-https ca-certificates curl software-properties-common git
 
 # ------------------------------
-# Remove Docker antigo se existir
+# Limpeza condicional Docker / Stacks
 # ------------------------------
-if command -v docker &> /dev/null; then
-    echo ">>> Docker detectado, removendo versões antigas e containers..."
+if [ "$FORCE_CLEAN" == "--force-clean" ]; then
+    echo ">>> FORCE CLEAN ativado: removendo Docker, containers, stacks e volumes antigos..."
     
-    # Para todos os containers
-    docker ps -aq | xargs -r docker rm -f
-
-    # Remove stacks existentes
-    docker stack ls -q | xargs -r docker stack rm
-
-    # Remove volumes
-    docker volume ls -q | xargs -r docker volume rm -f
-
-    # Remove imagens
-    docker images -q | xargs -r docker rmi -f
-
-    # Remove pacotes docker
-    apt-get remove -y docker docker-engine docker.io containerd runc docker-ce docker-ce-cli docker-compose-plugin || true
-    apt-get purge -y docker docker-engine docker.io containerd runc docker-ce docker-ce-cli docker-compose-plugin || true
-    rm -rf /var/lib/docker /var/lib/containerd
+    if command -v docker &> /dev/null; then
+        docker ps -aq | xargs -r docker rm -f
+        docker stack ls -q | xargs -r docker stack rm
+        docker volume ls -q | xargs -r docker volume rm -f
+        docker images -q | xargs -r docker rmi -f
+        apt-get remove -y docker docker-engine docker.io containerd runc docker-ce docker-ce-cli docker-compose-plugin || true
+        apt-get purge -y docker docker-engine docker.io containerd runc docker-ce docker-ce-cli docker-compose-plugin || true
+        rm -rf /var/lib/docker /var/lib/containerd
+    fi
+else
+    echo ">>> FORCE CLEAN não ativado: mantendo instalações existentes."
 fi
 
 # ------------------------------
-# Instala Docker do zero
+# Instala Docker do zero (ou mantém se já instalado)
 # ------------------------------
-echo ">>> Instalando Docker..."
-curl -fsSL https://get.docker.com | sh
-systemctl enable docker
-systemctl start docker
+if ! command -v docker &> /dev/null; then
+    echo ">>> Instalando Docker..."
+    curl -fsSL https://get.docker.com | sh
+    systemctl enable docker
+    systemctl start docker
+fi
 
 # ------------------------------
 # Inicializa Swarm (ignora se já ativo)
@@ -50,7 +48,7 @@ systemctl start docker
 docker swarm init || true
 
 # ------------------------------
-# Cria volumes e rede
+# Cria volumes e rede (ignora se já existem)
 # ------------------------------
 docker volume create portainer_data || true
 docker volume create volume_swarm_shared || true
